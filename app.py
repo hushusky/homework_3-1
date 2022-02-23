@@ -136,7 +136,6 @@ app.layout = html.Div([
         Output(component_id='candlestick-graph', component_property='figure')
     ],
     Input('submit-button', 'n_clicks'),
-
     # The callback function will
     # fire when the submit button's n_clicks changes
     # The currency input's value is passed in as a "State" because if the user is typing and the value changes, then
@@ -147,9 +146,7 @@ app.layout = html.Div([
      State('edt-minute', 'value'), State('edt-second', 'value')]
 )
 def update_candlestick_graph(n_clicks, currency_string, what_to_show,
-                             edt_date, edt_hour, edt_minute, edt_second,
-                             duration_string, duration_date, bar_size,
-                             use_rth):
+                             edt_date, edt_hour, edt_minute, edt_second):
     # n_clicks doesn't
     # get used, we only include it for the dependency.
 
@@ -207,29 +204,22 @@ def update_candlestick_graph(n_clicks, currency_string, what_to_show,
     ############################################################################
     # This block returns a candlestick plot of apple stock prices. You'll need
     # to delete or comment out this block and use your currency prices instead.
-
-    cph = fetch_historical_data(
-        contract=contract,
-        endDateTime='',
-        durationStr=duration_string + duration_date,
-        barSizeSetting=bar_size,
-        whatToShow=what_to_show,
-        useRTH=use_rth
+    df = pd.read_csv(
+        'https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv'
     )
-
     fig = go.Figure(
         data=[
             go.Candlestick(
-                x=cph['date'],
-                open=cph['open'],
-                high=cph['high'],
-                low=cph['low'],
-                close=cph['close']
+                x=df['Date'],
+                open=df['AAPL.Open'],
+                high=df['AAPL.High'],
+                low=df['AAPL.Low'],
+                close=df['AAPL.Close']
             )
         ]
     )
-    fig.update_layout(title=('Exchange Rate: ' + currency_string))
 
+    currency_string = 'default Apple price data fetch'
     ############################################################################
     ############################################################################
 
