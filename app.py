@@ -147,7 +147,9 @@ app.layout = html.Div([
      State('edt-minute', 'value'), State('edt-second', 'value')]
 )
 def update_candlestick_graph(n_clicks, currency_string, what_to_show,
-                             edt_date, edt_hour, edt_minute, edt_second):
+                             edt_date, edt_hour, edt_minute, edt_second,
+                             duration_string, duration_date, bar_size,
+                             use_rth):
     # n_clicks doesn't
     # get used, we only include it for the dependency.
 
@@ -207,12 +209,12 @@ def update_candlestick_graph(n_clicks, currency_string, what_to_show,
     # to delete or comment out this block and use your currency prices instead.
 
     cph = fetch_historical_data(
-        contract = contract,
-        endDateTime = end_date_time,
-        durationStr = duration_str,
-        barSizeSetting = bar_size_setting,
-        whatToShow = what_to_show,
-        useRTH = use_rth
+        contract=contract,
+        endDateTime='',
+        durationStr=duration_string + duration_date,
+        barSizeSetting=bar_size,
+        whatToShow=what_to_show,
+        useRTH=use_rth
     )
 
     fig = go.Figure(
