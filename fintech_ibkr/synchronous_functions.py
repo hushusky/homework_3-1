@@ -1,4 +1,3 @@
-
 import pandas as pd
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
@@ -27,9 +26,7 @@ class ibkr_app(EWrapper, EClient):
         # I've already done the same general process you need to go through
         # in the self.error_messages instance variable, so you can use that as
         # a guide.
-        self.historical_data = pd.DataFrame(columns=[
-            'date', 'open', 'high', 'low', 'close', 'volume', 'average', 'barCount'
-        ])
+        self.historical_data = pd.DataFrame(columns=["date", "open", "high", "low", "close"])
         self.historical_data_end = ''
         self.contract_details = ''
         self.contract_details_end = ''
@@ -55,17 +52,15 @@ class ibkr_app(EWrapper, EClient):
         # Take a look at candlestick_plot.ipynb for some help!
         # assign the dataframe to self.historical_data.
         # print(reqId, bar)
-        series_list = (bar.__str__().split(", "))
-        series_dict = pd.DataFrame({"date": [":".join(series_list[0].split(":")[1:])],
-                                    "open": [series_list[1].split(":")[1]],
-                                    "high": [series_list[2].split(":")[1]],
-                                    "low": [series_list[3].split(":")[1]],
-                                    "close": [series_list[4].split(":")[1]],
-                                    "volume": [series_list[5].split(":")[1]],
-                                    "average": [series_list[6].split(":")[1]],
-                                    "barCount": [series_list[7].split(":")[1]]
-                                    })
-        self.historical_data = pd.concat([self.historical_data, series_dict], ignore_index=True)
+        df = pd.DataFrame(
+            {'date': [bar.date],
+             'open': [bar.open],
+             'high': [bar.high],
+             'low': [bar.low],
+             'close': [bar.close]}
+        )
+        # self.historical_data = bar
+        self.historical_data = pd.concat([self.historical_data, df], ignore_index=True)
 
     def historicalDataEnd(self, reqId: int, start: str, end: str):
         # super().historicalDataEnd(reqId, start, end)
@@ -109,7 +104,6 @@ def fetch_historical_data(contract, endDateTime='', durationStr='30 D',
         time.sleep(0.01)
     app.disconnect()
     return app.historical_data
-
 
 
 
