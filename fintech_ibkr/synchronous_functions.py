@@ -1,4 +1,3 @@
-
 import pandas as pd
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
@@ -8,7 +7,7 @@ import time
 # If you want different default values, configure it here.
 default_hostname = '127.0.0.1'
 default_port = 7497
-default_client_id = 1 # can set and use your Master Client ID
+default_client_id = 10645  # can set and use your Master Client ID
 
 # This is the main app that we'll be using for sync and async functions.
 class ibkr_app(EWrapper, EClient):
@@ -27,7 +26,7 @@ class ibkr_app(EWrapper, EClient):
         # I've already done the same general process you need to go through
         # in the self.error_messages instance variable, so you can use that as
         # a guide.
-        self.historical_data = pd.DataFrame()
+        self.historical_data = pd.DataFrame(columns=["date", "open", "high", "low", "close"])
         self.historical_data_end = ''
         self.contract_details = ''
         self.contract_details_end = ''
@@ -52,13 +51,30 @@ class ibkr_app(EWrapper, EClient):
         #   so that it's accepted by the plotly candlestick function.
         # Take a look at candlestick_plot.ipynb for some help!
         # assign the dataframe to self.historical_data.
-        self.historical_data = self.historical_data.append(vars(bar), ignore_index=True)
-        self.historical_data['date'] = pd.to_datetime(self.historical_data['date'])
+        # print(reqId, bar)
+        df = pd.DataFrame(
+            {'date': [bar.date],
+             'open': [bar.open],
+             'high': [bar.high],
+             'low': [bar.low],
+             'close': [bar.close]}
+        )
+        # self.historical_data = bar
+        self.historical_data = pd.concat([self.historical_data, df], ignore_index=True)
 
     def historicalDataEnd(self, reqId: int, start: str, end: str):
         # super().historicalDataEnd(reqId, start, end)
         print("HistoricalDataEnd. ReqId:", reqId, "from", start, "to", end)
         self.historical_data_end = reqId
+
+    def contractDetails(self, reqId: int, contractDetails):
+        print(type(contractDetails))
+        print(contractDetails)
+        self.contract_details = contractDetails
+
+    def contractDetailsEnd(self, reqId: int):
+        print("ContractDetailsEnd. ReqId:", reqId)
+        self.contract_details_end = reqId
 
 
 def fetch_managed_accounts(hostname=default_hostname, port=default_port,
@@ -70,6 +86,7 @@ def fetch_managed_accounts(hostname=default_hostname, port=default_port,
 
     def run_loop():
         app.run()
+
     api_thread = threading.Thread(target=run_loop, daemon=True)
     api_thread.start()
     while isinstance(app.next_valid_id, type(None)):
@@ -86,8 +103,10 @@ def fetch_historical_data(contract, endDateTime='', durationStr='30 D',
     app.connect(hostname, port, client_id)
     while not app.isConnected():
         time.sleep(0.01)
+
     def run_loop():
         app.run()
+
     api_thread = threading.Thread(target=run_loop, daemon=True)
     api_thread.start()
     while isinstance(app.next_valid_id, type(None)):
@@ -100,3 +119,27 @@ def fetch_historical_data(contract, endDateTime='', durationStr='30 D',
         time.sleep(0.01)
     app.disconnect()
     return app.historical_data
+
+
+def fetch_contract_details(contract, hostname=default_hostname,
+                           port=default_port, client_id=default_client_id):
+    app = ibkr_app()
+    app.connect(hostname, port, client_id)
+    while not app.isConnected():
+        time.sleep(0.01)
+
+    def run_loop():
+        app.run()
+
+    api_thread = threading.Thread(target=run_loop, daemon=True)
+    api_thread.start()
+    while isinstance(app.next_valid_id, type(None)):
+        # print('line 137')
+        time.sleep(0.01)
+    tickerId = app.next_valid_id
+    app.reqContractDetails(tickerId, contract)
+    while app.contract_details_end != tickerId:
+        # print('line142')
+        time.sleep(0.01)
+    app.disconnect()
+    return app.contract_details
